@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quiet Time &mdash; Whole Bible</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+:root{
+  --bg:#000;--surface:#141414;--surface-2:#1f1f1f;
+  --line:rgba(255,255,255,.08);--line-strong:rgba(255,255,255,.16);
+  --text:#f5f5f7;--muted:#86868b;--muted-2:#a1a1a6;
+  --accent:#e50914;--accent-2:#f5c518;
+  --radius:14px;--radius-lg:22px;
+}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:"SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Inter,sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh;
+}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+
+/* Sticky nav with breadcrumbs */
+.nav{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:12px;
+  padding:14px 24px;
+  background:rgba(0,0,0,.7);backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--line);
+}
+.nav .brand{font-weight:600;letter-spacing:-.01em;font-size:15px;margin-right:auto}
+.nav .brand span{color:var(--accent)}
+.crumb{
+  font-size:13px;color:var(--muted-2);cursor:pointer;
+  padding:6px 10px;border-radius:6px;transition:background .15s;
+}
+.crumb:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.crumb.active{color:var(--text);font-weight:500}
+.crumb-sep{color:var(--muted);font-size:13px}
+
+/* Hero — only on book picker */
+.hero{
+  position:relative;padding:80px 24px 60px;text-align:center;
+  background:radial-gradient(ellipse at top,rgba(229,9,20,.18) 0%,rgba(0,0,0,0) 60%);
+}
+.hero .eyebrow{
+  display:inline-block;color:var(--accent);font-weight:600;font-size:12px;
+  letter-spacing:.22em;text-transform:uppercase;margin-bottom:14px;
+}
+.hero h1{
+  font-size:clamp(48px,7vw,88px);font-weight:700;
+  letter-spacing:-.035em;line-height:.95;margin:0 0 16px;
+}
+.hero p{font-size:clamp(17px,1.6vw,20px);color:var(--muted-2);max-width:560px;margin:0 auto}
+
+main{max-width:1100px;margin:0 auto;padding:40px 24px 120px}
+@media (max-width:720px){main{padding:24px 18px 80px}}
+
+.section-title{
+  display:flex;align-items:baseline;justify-content:space-between;margin:8px 0 18px;
+}
+.section-title h2{
+  font-size:14px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);margin:0;
+}
+.section-title .count{color:var(--muted);font-size:12px;letter-spacing:.04em}
+
+/* Book grid */
+.books{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:10px;margin-bottom:42px;
+}
+.book-card{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);padding:18px 16px;
+  cursor:pointer;transition:all .15s ease;
+  display:flex;flex-direction:column;justify-content:space-between;
+  min-height:88px;
+}
+.book-card:hover{
+  transform:translateY(-3px);border-color:var(--accent);
+  background:linear-gradient(180deg,#1f1410,#170d0a);
+}
+.book-card .name{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.book-card .meta{color:var(--muted);font-size:12px;margin-top:6px}
+
+/* Chapter grid */
+.chapters{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:10px;
+}
+.ch-tile{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);padding:18px 0;text-align:center;
+  cursor:pointer;transition:all .15s ease;font-size:22px;font-weight:600;
+  letter-spacing:-.02em;position:relative;
+}
+.ch-tile:hover{border-color:var(--accent);background:var(--surface-2);transform:translateY(-2px)}
+.ch-tile.active{
+  background:linear-gradient(180deg,#1f1410,#170d0a);
+  border-color:var(--accent);color:#fff;
+  box-shadow:0 0 0 2px var(--accent) inset, 0 16px 50px rgba(229,9,20,.28);
+}
+
+.subhead{
+  display:flex;align-items:baseline;gap:14px;margin:8px 0 22px;
+}
+.subhead h1{
+  font-size:clamp(34px,5vw,52px);font-weight:700;
+  letter-spacing:-.03em;margin:0;
+}
+.subhead .pill{
+  background:rgba(229,9,20,.15);border:1px solid rgba(229,9,20,.4);
+  color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;padding:4px 10px;border-radius:999px;
+}
+.back{
+  display:inline-flex;align-items:center;gap:6px;
+  color:var(--muted-2);font-size:14px;cursor:pointer;margin-bottom:16px;
+}
+.back:hover{color:var(--text)}
+
+/* Devotion Guide — focal element */
+.detail{max-width:760px;margin:32px auto 0}
+.devotion{
+  background:linear-gradient(180deg,#161616 0%,#0d0d0d 100%);
+  border:1px solid var(--line);border-radius:var(--radius-lg);
+  padding:40px;position:relative;overflow:hidden;
+}
+.devotion::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+}
+.devotion-header{margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+.devotion-header .eyebrow{
+  color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.24em;
+  text-transform:uppercase;display:block;margin-bottom:8px;
+}
+.devotion-header h2{margin:0;font-size:38px;font-weight:700;letter-spacing:-.025em}
+.field{padding:18px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.field:last-of-type{border-bottom:none}
+.field h3{margin:0 0 6px;font-size:14px;font-weight:600;letter-spacing:.02em;display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.field p{margin:0;color:var(--muted-2);font-size:15px;line-height:1.55}
+.note{
+  margin-top:24px;padding:16px 18px;
+  background:rgba(245,197,24,.06);border-left:3px solid var(--accent-2);
+  border-radius:4px;color:var(--muted-2);font-size:14px;font-style:italic;
+}
+.translations-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{
+  background:var(--surface);border:1px solid var(--line);
+  padding:6px 12px;border-radius:999px;font-size:12px;font-weight:500;
+  color:var(--muted-2);letter-spacing:.02em;
+}
+.live{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:3px 9px;
+  background:rgba(229,9,20,.12);border:1px solid rgba(229,9,20,.4);
+  color:var(--accent);border-radius:999px;
+  font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+}
+.live::before{
+  content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 0 0 rgba(229,9,20,.6);animation:pulse 2s infinite;
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(229,9,20,.55)}
+  70%{box-shadow:0 0 0 10px rgba(229,9,20,0)}
+  100%{box-shadow:0 0 0 0 rgba(229,9,20,0)}
+}
+.reading-field .hint{margin:0 0 12px;font-size:13px;color:var(--muted)}
+.reading-links{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.link-card{
+  display:flex;align-items:center;gap:14px;
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);padding:14px 16px;
+  transition:all .15s ease;
+}
+.link-card:hover{border-color:var(--accent);background:var(--surface-2);transform:translateX(3px)}
+.link-card .step{
+  flex-shrink:0;width:28px;height:28px;border-radius:50%;
+  background:rgba(229,9,20,.15);border:1px solid rgba(229,9,20,.4);
+  color:var(--accent);font-weight:700;font-size:13px;
+  display:flex;align-items:center;justify-content:center;
+}
+.link-card:hover .step{background:var(--accent);color:#fff;border-color:var(--accent)}
+.link-card .link-text{flex:1;min-width:0}
+.link-card .name{font-weight:600;font-size:15px;letter-spacing:-.01em}
+.link-card .desc{color:var(--muted);font-size:13px;margin-top:2px}
+.link-card .arrow{color:var(--muted);font-size:20px;line-height:1;flex-shrink:0}
+
+footer{text-align:center;padding:40px 0 20px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);margin-top:60px}
+
+.view{display:none}
+.view.active{display:block;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="brand">Quiet <span>Time</span></div>
+  <div id="crumbs"></div>
+</nav>
+
+<header class="hero">
+  <span class="eyebrow">Whole Bible &middot; 66 Books</span>
+  <h1>Pick a Book.<br>Read a Chapter.<br>Meet with God.</h1>
+  <p>Every chapter wired to four trusted commentaries. One Devotion Guide. Your pace.</p>
+</header>
+
+<main>
+
+  <!-- View: book picker -->
+  <section class="view active" id="view-books">
+    <div class="section-title"><h2>Old Testament</h2><span class="count">39 books</span></div>
+    <div class="books" id="ot-books"></div>
+    <div class="section-title"><h2>New Testament</h2><span class="count">27 books</span></div>
+    <div class="books" id="nt-books"></div>
+  </section>
+
+  <!-- View: chapter picker -->
+  <section class="view" id="view-chapters">
+    <div class="back" onclick="go('books')">&larr; All books</div>
+    <div class="subhead"><h1 id="chapters-title">Book</h1><span class="pill" id="chapters-meta">N chapters</span></div>
+    <div class="section-title"><h2>Choose a Chapter</h2></div>
+    <div class="chapters" id="chapters-grid"></div>
+  </section>
+
+  <!-- View: devotion detail -->
+  <section class="view" id="view-detail">
+    <div class="back" onclick="go('chapters')">&larr; All chapters</div>
+    <div class="detail">
+      <section class="devotion">
+        <div class="devotion-header">
+          <span class="eyebrow" id="dev-eyebrow">Quiet Time</span>
+          <h2>Devotion Guide</h2>
+        </div>
+        <div class="devotion-body">
+          <div class="field"><h3>Time and Date</h3></div>
+          <div class="field"><h3>Which number is this QT?</h3><p>Just a cool way to track of how many QTs you&rsquo;ve done in life</p></div>
+          <div class="field"><h3>Passage + Translations, Commentaries</h3>
+            <p>ESV, NLT, NKJV, NASB, NIV &mdash; Read the chapter in two of these translations OR side by side</p>
+            <div class="translations-strip">
+              <span class="chip">ESV</span><span class="chip">NLT</span><span class="chip">NKJV</span><span class="chip">NASB</span><span class="chip">NIV</span>
+            </div>
+          </div>
+          <div class="field reading-field">
+            <h3>Reading <span class="live" id="dev-reading-pill">Dynamic Links</span></h3>
+            <p class="hint">Work through these in order:</p>
+            <div class="reading-links" id="dev-links"></div>
+          </div>
+          <div class="field"><h3>Title</h3><p>(Any Title of your QT &mdash; e.g. <span id="dev-title-hint">Book Chapter</span> if you&rsquo;re stuck)</p></div>
+          <div class="field"><h3>Meditation</h3><p>Share your honest reflections! How is the scripture speaking to you? What is on your heart? What is God&rsquo;s intent of the word? What is the scripture really saying? What&rsquo;s the context of the scripture?</p></div>
+          <div class="field"><h3>Core Truth</h3><p>What&rsquo;s the main point of the passage? What are you learning about God through this passage?</p></div>
+          <div class="field"><h3>Application</h3><p>How can you apply this to your life?</p></div>
+          <div class="field"><h3>Prayer</h3><p>What can you pray for with regards to the passage you just read?</p></div>
+          <div class="note">Note &mdash; Sometimes I skip some elements cause I&rsquo;m lazy OR I sometimes there&rsquo; isn&rsquo;t necessarily a direct application.</div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <footer>Read &middot; Reflect &middot; Pray</footer>
+</main>
+
+<script>
+
+const BOOKS = [{"name": "Genesis", "testament": "OT", "chapters": 50, "ew": "genesis", "br": "Genesis", "mh": "genesis", "blb": "gen", "blbBase": 0}, {"name": "Exodus", "testament": "OT", "chapters": 40, "ew": "exodus", "br": "Exodus", "mh": "exodus", "blb": "exo", "blbBase": 50}, {"name": "Leviticus", "testament": "OT", "chapters": 27, "ew": "leviticus", "br": "Leviticus", "mh": "leviticus", "blb": "lev", "blbBase": 90}, {"name": "Numbers", "testament": "OT", "chapters": 36, "ew": "numbers", "br": "Numbers", "mh": "numbers", "blb": "num", "blbBase": 117}, {"name": "Deuteronomy", "testament": "OT", "chapters": 34, "ew": "deuteronomy", "br": "Deuteronomy", "mh": "deuteronomy", "blb": "deu", "blbBase": 153}, {"name": "Joshua", "testament": "OT", "chapters": 24, "ew": "joshua", "br": "Joshua", "mh": "joshua", "blb": "jos", "blbBase": 187}, {"name": "Judges", "testament": "OT", "chapters": 21, "ew": "judges", "br": "Judges", "mh": "judges", "blb": "jdg", "blbBase": 211}, {"name": "Ruth", "testament": "OT", "chapters": 4, "ew": "ruth", "br": "Ruth", "mh": "ruth", "blb": "rut", "blbBase": 232}, {"name": "1 Samuel", "testament": "OT", "chapters": 31, "ew": "1-samuel", "br": "1-Samuel", "mh": "1-samuel", "blb": "1sa", "blbBase": 236}, {"name": "2 Samuel", "testament": "OT", "chapters": 24, "ew": "2-samuel", "br": "2-Samuel", "mh": "2-samuel", "blb": "2sa", "blbBase": 267}, {"name": "1 Kings", "testament": "OT", "chapters": 22, "ew": "1-kings", "br": "1-Kings", "mh": "1-kings", "blb": "1ki", "blbBase": 291}, {"name": "2 Kings", "testament": "OT", "chapters": 25, "ew": "2-kings", "br": "2-Kings", "mh": "2-kings", "blb": "2ki", "blbBase": 313}, {"name": "1 Chronicles", "testament": "OT", "chapters": 29, "ew": "1-chronicles", "br": "1-Chronicles", "mh": "1-chronicles", "blb": "1ch", "blbBase": 338}, {"name": "2 Chronicles", "testament": "OT", "chapters": 36, "ew": "2-chronicles", "br": "2-Chronicles", "mh": "2-chronicles", "blb": "2ch", "blbBase": 367}, {"name": "Ezra", "testament": "OT", "chapters": 10, "ew": "ezra", "br": "Ezra", "mh": "ezra", "blb": "ezr", "blbBase": 403}, {"name": "Nehemiah", "testament": "OT", "chapters": 13, "ew": "nehemiah", "br": "Nehemiah", "mh": "nehemiah", "blb": "neh", "blbBase": 413}, {"name": "Esther", "testament": "OT", "chapters": 10, "ew": "esther", "br": "Esther", "mh": "esther", "blb": "est", "blbBase": 426}, {"name": "Job", "testament": "OT", "chapters": 42, "ew": "job", "br": "Job", "mh": "job", "blb": "job", "blbBase": 436}, {"name": "Psalms", "testament": "OT", "chapters": 150, "ew": "psalm", "br": "Psalms", "mh": "psalms", "blb": "psa", "blbBase": 478}, {"name": "Proverbs", "testament": "OT", "chapters": 31, "ew": "proverbs", "br": "Proverbs", "mh": "proverbs", "blb": "pro", "blbBase": 628}, {"name": "Ecclesiastes", "testament": "OT", "chapters": 12, "ew": "ecclesiastes", "br": "Ecclesiastes", "mh": "ecclesiastes", "blb": "ecc", "blbBase": 659}, {"name": "Song of Solomon", "testament": "OT", "chapters": 8, "ew": "song-of-solomon", "br": "Song-of-Solomon", "mh": "song-of-solomon", "blb": "sgs", "mhSpecial": true, "blbBase": 671}, {"name": "Isaiah", "testament": "OT", "chapters": 66, "ew": "isaiah", "br": "Isaiah", "mh": "isaiah", "blb": "isa", "blbBase": 679}, {"name": "Jeremiah", "testament": "OT", "chapters": 52, "ew": "jeremiah", "br": "Jeremiah", "mh": "jeremiah", "blb": "jer", "blbBase": 745}, {"name": "Lamentations", "testament": "OT", "chapters": 5, "ew": "lamentations", "br": "Lamentations", "mh": "lamentations", "blb": "lam", "blbBase": 797}, {"name": "Ezekiel", "testament": "OT", "chapters": 48, "ew": "ezekiel", "br": "Ezekiel", "mh": "ezekiel", "blb": "eze", "blbBase": 802}, {"name": "Daniel", "testament": "OT", "chapters": 12, "ew": "daniel", "br": "Daniel", "mh": "daniel", "blb": "dan", "blbBase": 850}, {"name": "Hosea", "testament": "OT", "chapters": 14, "ew": "hosea", "br": "Hosea", "mh": "hosea", "blb": "hos", "blbBase": 862}, {"name": "Joel", "testament": "OT", "chapters": 3, "ew": "joel", "br": "Joel", "mh": "joel", "blb": "joe", "blbBase": 876}, {"name": "Amos", "testament": "OT", "chapters": 9, "ew": "amos", "br": "Amos", "mh": "amos", "blb": "amo", "blbBase": 879}, {"name": "Obadiah", "testament": "OT", "chapters": 1, "ew": "obadiah", "br": "Obadiah", "mh": "obadiah", "blb": "oba", "blbBase": 888}, {"name": "Jonah", "testament": "OT", "chapters": 4, "ew": "jonah", "br": "Jonah", "mh": "jonah", "blb": "jon", "blbBase": 889}, {"name": "Micah", "testament": "OT", "chapters": 7, "ew": "micah", "br": "Micah", "mh": "micah", "blb": "mic", "blbBase": 893}, {"name": "Nahum", "testament": "OT", "chapters": 3, "ew": "nahum", "br": "Nahum", "mh": "nahum", "blb": "nah", "blbBase": 900}, {"name": "Habakkuk", "testament": "OT", "chapters": 3, "ew": "habakkuk", "br": "Habakkuk", "mh": "habakkuk", "blb": "hab", "blbBase": 903}, {"name": "Zephaniah", "testament": "OT", "chapters": 3, "ew": "zephaniah", "br": "Zephaniah", "mh": "zephaniah", "blb": "zep", "blbBase": 906}, {"name": "Haggai", "testament": "OT", "chapters": 2, "ew": "haggai", "br": "Haggai", "mh": "haggai", "blb": "hag", "blbBase": 909}, {"name": "Zechariah", "testament": "OT", "chapters": 14, "ew": "zechariah", "br": "Zechariah", "mh": "zechariah", "blb": "zec", "blbBase": 911}, {"name": "Malachi", "testament": "OT", "chapters": 4, "ew": "malachi", "br": "Malachi", "mh": "malachi", "blb": "mal", "blbBase": 925}, {"name": "Matthew", "testament": "NT", "chapters": 28, "ew": "matthew", "br": "Matthew", "mh": "matthew", "blb": "mat", "blbBase": 929}, {"name": "Mark", "testament": "NT", "chapters": 16, "ew": "mark", "br": "Mark", "mh": "mark", "blb": "mar", "blbBase": 957}, {"name": "Luke", "testament": "NT", "chapters": 24, "ew": "luke", "br": "Luke", "mh": "luke", "blb": "luk", "blbBase": 973}, {"name": "John", "testament": "NT", "chapters": 21, "ew": "john", "br": "John", "mh": "john", "blb": "jhn", "blbBase": 997}, {"name": "Acts", "testament": "NT", "chapters": 28, "ew": "acts", "br": "Acts", "mh": "acts", "blb": "act", "blbBase": 1018}, {"name": "Romans", "testament": "NT", "chapters": 16, "ew": "romans", "br": "Romans", "mh": "romans", "blb": "rom", "blbBase": 1046}, {"name": "1 Corinthians", "testament": "NT", "chapters": 16, "ew": "1-corinthians", "br": "1-Corinthians", "mh": "1-corinthians", "blb": "1co", "blbBase": 1062}, {"name": "2 Corinthians", "testament": "NT", "chapters": 13, "ew": "2-corinthians", "br": "2-Corinthians", "mh": "2-corinthians", "blb": "2co", "blbBase": 1078}, {"name": "Galatians", "testament": "NT", "chapters": 6, "ew": "galatians", "br": "Galatians", "mh": "galatians", "blb": "gal", "blbBase": 1091}, {"name": "Ephesians", "testament": "NT", "chapters": 6, "ew": "ephesians", "br": "Ephesians", "mh": "ephesians", "blb": "eph", "blbBase": 1097}, {"name": "Philippians", "testament": "NT", "chapters": 4, "ew": "philippians", "br": "Philippians", "mh": "philippians", "blb": "php", "blbBase": 1103}, {"name": "Colossians", "testament": "NT", "chapters": 4, "ew": "colossians", "br": "Colossians", "mh": "colossians", "blb": "col", "blbBase": 1107}, {"name": "1 Thessalonians", "testament": "NT", "chapters": 5, "ew": "1-thessalonians", "br": "1-Thessalonians", "mh": "1-thessalonians", "blb": "1th", "blbBase": 1111}, {"name": "2 Thessalonians", "testament": "NT", "chapters": 3, "ew": "2-thessalonians", "br": "2-Thessalonians", "mh": "2-thessalonians", "blb": "2th", "blbBase": 1116}, {"name": "1 Timothy", "testament": "NT", "chapters": 6, "ew": "1-timothy", "br": "1-Timothy", "mh": "1-timothy", "blb": "1ti", "blbBase": 1119}, {"name": "2 Timothy", "testament": "NT", "chapters": 4, "ew": "2-timothy", "br": "2-Timothy", "mh": "2-timothy", "blb": "2ti", "blbBase": 1125}, {"name": "Titus", "testament": "NT", "chapters": 3, "ew": "titus", "br": "Titus", "mh": "titus", "blb": "tit", "blbBase": 1129}, {"name": "Philemon", "testament": "NT", "chapters": 1, "ew": "philemon", "br": "Philemon", "mh": "philemon", "blb": "phm", "blbBase": 1132}, {"name": "Hebrews", "testament": "NT", "chapters": 13, "ew": "hebrews", "br": "Hebrews", "mh": "hebrews", "blb": "heb", "blbBase": 1133}, {"name": "James", "testament": "NT", "chapters": 5, "ew": "james", "br": "James", "mh": "james", "blb": "jas", "blbBase": 1146}, {"name": "1 Peter", "testament": "NT", "chapters": 5, "ew": "1-peter", "br": "1-Peter", "mh": "1-peter", "blb": "1pe", "blbBase": 1151}, {"name": "2 Peter", "testament": "NT", "chapters": 3, "ew": "2-peter", "br": "2-Peter", "mh": "2-peter", "blb": "2pe", "blbBase": 1156}, {"name": "1 John", "testament": "NT", "chapters": 5, "ew": "1-john", "br": "1-John", "mh": "1-john", "blb": "1jo", "blbBase": 1159}, {"name": "2 John", "testament": "NT", "chapters": 1, "ew": "2-john", "br": "2-John", "mh": "2-john", "blb": "2jo", "blbBase": 1164}, {"name": "3 John", "testament": "NT", "chapters": 1, "ew": "3-john", "br": "3-John", "mh": "3-john", "blb": "3jo", "blbBase": 1165}, {"name": "Jude", "testament": "NT", "chapters": 1, "ew": "jude", "br": "Jude", "mh": "jude", "blb": "jud", "blbBase": 1166}, {"name": "Revelation", "testament": "NT", "chapters": 22, "ew": "revelation", "br": "Revelation", "mh": "revelation", "blb": "rev", "blbBase": 1167}];
+const state = {bookIdx:null, chapter:null};
+
+function url_ew(b, n){ return `https://enduringword.com/bible-commentary/${b.ew}-${n}/`; }
+function url_br(b, n){ return `https://www.bibleref.com/${b.br}/${n}/${b.br}-chapter-${n}.html`; }
+function url_mh(b, n){
+  // Song of Solomon uses a different file pattern
+  if (b.mhSpecial) return `https://www.biblestudytools.com/commentaries/matthew-henry-complete/${b.mh}/${b.mh}-${n}.html`;
+  return `https://www.biblestudytools.com/commentaries/matthew-henry-complete/${b.mh}/${n}.html`;
+}
+function url_blb(b, n){
+  const sid = (b.blbBase + n) * 1000 + 1;
+  return `https://www.blueletterbible.org/esv/${b.blb}/${n}/1/s_${sid}`;
+}
+
+const $ = sel => document.querySelector(sel);
+const $$ = sel => document.querySelectorAll(sel);
+
+function show(view){
+  $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
+  $('.hero').style.display = view === 'books' ? 'block' : 'none';
+  window.scrollTo({top:0,behavior:'smooth'});
+  updateCrumbs(view);
+}
+function updateCrumbs(view){
+  const c = $('#crumbs');
+  let html = '<span class="crumb' + (view === 'books' ? ' active' : '') + '" onclick="go(\'books\')">All Books</span>';
+  if (state.bookIdx !== null && view !== 'books'){
+    const b = BOOKS[state.bookIdx];
+    html += '<span class="crumb-sep">/</span>';
+    html += '<span class="crumb' + (view === 'chapters' ? ' active' : '') + '" onclick="go(\'chapters\')">' + b.name + '</span>';
+    if (view === 'detail'){
+      html += '<span class="crumb-sep">/</span>';
+      html += '<span class="crumb active">Chapter ' + state.chapter + '</span>';
+    }
+  }
+  c.innerHTML = html;
+}
+function go(view){ show(view); }
+
+function renderBooks(){
+  const ot = BOOKS.map((b,i)=>({b,i})).filter(x=>x.b.testament==='OT');
+  const nt = BOOKS.map((b,i)=>({b,i})).filter(x=>x.b.testament==='NT');
+  const tile = ({b,i}) => `<div class="book-card" onclick="pickBook(${i})"><div class="name">${b.name}</div><div class="meta">${b.chapters} chapter${b.chapters>1?'s':''}</div></div>`;
+  $('#ot-books').innerHTML = ot.map(tile).join('');
+  $('#nt-books').innerHTML = nt.map(tile).join('');
+}
+function pickBook(i){
+  state.bookIdx = i; state.chapter = null;
+  const b = BOOKS[i];
+  $('#chapters-title').textContent = b.name;
+  $('#chapters-meta').textContent = b.chapters + ' chapters';
+  let html = '';
+  for (let n = 1; n <= b.chapters; n++){
+    html += `<div class="ch-tile" onclick="pickChapter(${n})">${n}</div>`;
+  }
+  $('#chapters-grid').innerHTML = html;
+  show('chapters');
+}
+function pickChapter(n){
+  state.chapter = n;
+  const b = BOOKS[state.bookIdx];
+  const name = b.name + ' ' + n;
+  $('#dev-eyebrow').textContent = 'Quiet Time · ' + name;
+  $('#dev-title-hint').textContent = name;
+  $('#dev-reading-pill').textContent = 'Dynamic Links · ' + name;
+  const links = [
+    {n:1, name:'Enduring Word commentary', desc:'David Guzik — verse by verse',     url:url_ew(b,n)},
+    {n:2, name:'Bible Ref',                desc:'Clear chapter overview',           url:url_br(b,n)},
+    {n:3, name:'Matthew Henry Commentary', desc:'Classic complete commentary',      url:url_mh(b,n)},
+    {n:4, name:'Blue Letter Bible',        desc:'Deep study — Greek & parallel',    url:url_blb(b,n)},
+  ];
+  $('#dev-links').innerHTML = links.map(l => `
+    <a class="link-card" href="${l.url}" target="_blank" rel="noopener">
+      <span class="step">${l.n}</span>
+      <div class="link-text"><div class="name">${l.name}</div><div class="desc">${l.desc}</div></div>
+      <span class="arrow">›</span>
+    </a>`).join('');
+  show('detail');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderBooks();
+  show('books');
+});
+
+</script>
+</body>
+</html>
